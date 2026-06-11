@@ -53,11 +53,47 @@ export function ArrowRightIcon({ className = 'h-4 w-4' }) {
   )
 }
 
+export function ArrowLeftIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <line x1="20" y1="12" x2="5" y2="12" />
+      <polyline points="11 6 5 12 11 18" />
+    </svg>
+  )
+}
+
 export function MapPinIcon({ className = 'h-4 w-4' }) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
       <path d="M12 21s-6.5-5.2-6.5-10A6.5 6.5 0 0 1 18.5 11c0 4.8-6.5 10-6.5 10Z" />
       <circle cx="12" cy="11" r="2.2" />
+    </svg>
+  )
+}
+
+export function PhoneIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <path d="M4 5c0 9 6 15 15 15a2 2 0 0 0 2-2v-2.5a1 1 0 0 0-.8-1l-3-.6a1 1 0 0 0-1 .4l-.9 1.2a12 12 0 0 1-5-5l1.2-.9a1 1 0 0 0 .4-1l-.6-3a1 1 0 0 0-1-.8H6a2 2 0 0 0-2 2Z" />
+    </svg>
+  )
+}
+
+export function MenuIcon({ className = 'h-6 w-6' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <line x1="4" y1="7" x2="20" y2="7" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <line x1="4" y1="17" x2="20" y2="17" />
+    </svg>
+  )
+}
+
+export function CloseIcon({ className = 'h-6 w-6' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <line x1="6" y1="6" x2="18" y2="18" />
+      <line x1="18" y1="6" x2="6" y2="18" />
     </svg>
   )
 }
