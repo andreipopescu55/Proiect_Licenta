@@ -135,3 +135,7 @@ redis_data/
 
 # Scripturi demo/seed temporare (one-off, nu fac parte din aplicatie)
 _demo_*.py
+
+# Skill-uri externe instalate via npx skills (nu fac parte din aplicatie)
+/.agents
+skills-lock.json

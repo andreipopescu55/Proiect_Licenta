@@ -102,8 +102,9 @@ export default function AdminPage() {
         setFieldId(next[0]?.id ?? '')
         return next
       })
-    } catch {
-      setActionError('Ștergerea a eșuat (terenul are rezervări?).')
+    } catch (err) {
+      // Backend-ul trimite un mesaj clar (ex: teren cu rezervari -> 409).
+      setActionError(err.response?.data?.detail || 'Ștergerea a eșuat. Încearcă din nou.')
     }
   }
 

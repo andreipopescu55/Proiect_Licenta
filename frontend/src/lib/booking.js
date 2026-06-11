@@ -72,16 +72,29 @@ export function localISO(dateStr, minute) {
   return `${dateStr}T${minutesToTime(minute)}:00`
 }
 
-// Prima data >= azi care are reguli de pret (ca formularul sa porneasca pe o zi utila).
-export function defaultBookingDate(rules) {
-  const today = new Date()
+// Prima data >= azi care are sloturi INCA disponibile (ca formularul sa nu
+// porneasca pe o zi al carei program s-a terminat deja).
+// Pentru azi cerem sa existe un slot care incepe in viitor SI permite durata
+// minima; altfel trecem la ziua urmatoare.
+export function defaultBookingDate(rules, slotDuration = 30, minBooking = 60) {
+  const now = new Date()
+  const nowMin = now.getHours() * 60 + now.getMinutes()
   for (let i = 0; i < 21; i++) {
-    const d = new Date(today)
-    d.setDate(today.getDate() + i)
+    const d = new Date(now)
+    d.setDate(now.getDate() + i)
     const ds = toDateStr(d)
-    if (rules.some((r) => r.day_of_week === dowFromDate(ds))) return ds
+    const dow = dowFromDate(ds)
+    const slots = buildDaySlots(rules, dow, slotDuration)
+    if (slots.length === 0) continue
+    if (i === 0) {
+      const usable = slots.some(
+        (s) => s > nowMin && estimatePrice(rules, dow, s, minBooking, slotDuration) != null,
+      )
+      if (!usable) continue // azi s-a terminat -> incercam mâine
+    }
+    return ds
   }
-  return toDateStr(today)
+  return toDateStr(now)
 }
 
 // "1 iunie 2026, luni" pentru afisare.

@@ -43,7 +43,8 @@ export default function BookingPage() {
         if (!active) return
         setField(f)
         setRules(p)
-        setDate(defaultBookingDate(p)) // pornim pe prima zi cu tarife
+        // pornim pe prima zi cu sloturi inca disponibile (sare peste azi daca s-a terminat)
+        setDate(defaultBookingDate(p, f.slot_duration_minutes, f.min_booking_minutes))
       })
       .catch(() => active && setError('Terenul nu a fost găsit.'))
       .finally(() => active && setLoading(false))
