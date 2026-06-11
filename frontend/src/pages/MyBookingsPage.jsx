@@ -1,15 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { listMyBookings, cancelBooking, getField } from '../api/resources'
 import { BOOKING_STATUS, fieldFormat } from '../lib/labels'
 import { formatDateTimeRo } from '../lib/booking'
+import { Skeleton } from '../components/ui/Skeleton'
+import EmptyState from '../components/ui/EmptyState'
+import { PitchIcon } from '../components/ui/icons'
 
-// Doar ora ("18:00") dintr-un datetime ISO al backend-ului.
 function timeRo(iso) {
   return new Date(iso).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
 }
 
-// O rezervare e anulabila daca e activa (pending/confirmed) si nu a inceput inca.
 function isCancellable(b) {
   const active = b.status === 'pending' || b.status === 'confirmed'
   return active && new Date(b.start_time) > new Date()
@@ -18,17 +19,14 @@ function isCancellable(b) {
 export default function MyBookingsPage() {
   const location = useLocation()
   const [bookings, setBookings] = useState([])
-  const [fields, setFields] = useState({}) // field_id -> { name, sport_type }
+  const [fields, setFields] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Banner de succes daca tocmai am venit din fluxul de rezervare.
   const [justBooked, setJustBooked] = useState(Boolean(location.state?.justBooked))
-
   const [cancellingId, setCancellingId] = useState(null)
   const [actionError, setActionError] = useState(null)
 
-  // 1) Incarcam rezervarile, apoi numele terenurilor (un fetch per teren unic).
   useEffect(() => {
     let active = true
     listMyBookings()
@@ -51,7 +49,6 @@ export default function MyBookingsPage() {
     }
   }, [])
 
-  // Impartim in "viitoare" (activ + neînceput) si "istoric" (restul).
   const { upcoming, history } = useMemo(() => {
     const up = []
     const hist = []
@@ -59,8 +56,8 @@ export default function MyBookingsPage() {
       if (isCancellable(b)) up.push(b)
       else hist.push(b)
     }
-    up.sort((a, b) => new Date(a.start_time) - new Date(b.start_time)) // cele apropiate primele
-    hist.sort((a, b) => new Date(b.start_time) - new Date(a.start_time)) // recente primele
+    up.sort((a, b) => new Date(a.start_time) - new Date(b.start_time))
+    hist.sort((a, b) => new Date(b.start_time) - new Date(a.start_time))
     return { upcoming: up, history: hist }
   }, [bookings])
 
@@ -69,7 +66,6 @@ export default function MyBookingsPage() {
     setCancellingId(booking.id)
     try {
       const updated = await cancelBooking(booking.id)
-      // Inlocuim rezervarea cu varianta intoarsa de server (status=cancelled).
       setBookings((prev) => prev.map((b) => (b.id === updated.id ? updated : b)))
     } catch (err) {
       const status = err.response?.status
@@ -91,28 +87,28 @@ export default function MyBookingsPage() {
   }
 
   function renderCard(b) {
-    const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: 'bg-slate-100 text-slate-600' }
+    const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: 'bg-panel-2 text-slate-400' }
     const canCancel = isCancellable(b)
     return (
       <li
         key={b.id}
-        className="flex flex-col gap-3 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-100 sm:flex-row sm:items-center sm:justify-between"
+        className="flex flex-col gap-3 rounded-2xl bg-panel p-5 ring-1 ring-line transition hover:ring-line-2 sm:flex-row sm:items-center sm:justify-between"
       >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-bold text-slate-900">{fieldLabel(b.field_id)}</h3>
+            <h3 className="font-bold text-white">{fieldLabel(b.field_id)}</h3>
             <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.cls}`}>
               {st.label}
             </span>
           </div>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-slate-300">
             {formatDateTimeRo(b.start_time)}–{timeRo(b.end_time)}
           </p>
-          {b.notes && <p className="mt-1 text-sm text-slate-400">{b.notes}</p>}
+          {b.notes && <p className="mt-1 text-sm text-slate-500">{b.notes}</p>}
         </div>
 
         <div className="flex items-center gap-4 sm:flex-col sm:items-end">
-          <span className="whitespace-nowrap text-lg font-extrabold text-slate-900">
+          <span className="whitespace-nowrap text-lg font-extrabold text-accent-400">
             {Number(b.total_price).toFixed(2)} {b.currency}
           </span>
           {canCancel && (
@@ -120,7 +116,7 @@ export default function MyBookingsPage() {
               type="button"
               onClick={() => handleCancel(b)}
               disabled={cancellingId === b.id}
-              className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+              className="rounded-lg border border-red-500/30 px-3 py-1.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
             >
               {cancellingId === b.id ? 'Se anulează…' : 'Anulează'}
             </button>
@@ -130,23 +126,31 @@ export default function MyBookingsPage() {
     )
   }
 
-  if (loading) return <p className="text-slate-500">Se încarcă…</p>
-  if (error) return <p className="text-red-600">{error}</p>
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-52" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+      </div>
+    )
+  }
+  if (error) return <p className="text-red-400">{error}</p>
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900">Rezervările mele</h1>
-        <p className="mt-1 text-slate-500">Gestionează rezervările tale curente și trecute.</p>
+        <h1 className="text-2xl font-extrabold text-white">Rezervările mele</h1>
+        <p className="mt-1 text-slate-400">Gestionează rezervările tale curente și trecute.</p>
       </div>
 
       {justBooked && (
-        <div className="flex items-start justify-between gap-3 rounded-2xl bg-mint-50 px-4 py-3 text-sm font-medium text-mint-600 ring-1 ring-mint-500/20">
+        <div className="flex items-start justify-between gap-3 rounded-2xl bg-accent-400/10 px-4 py-3 text-sm font-medium text-accent-400 ring-1 ring-accent-400/20">
           <span>✓ Rezervarea ta a fost înregistrată.</span>
           <button
             type="button"
             onClick={() => setJustBooked(false)}
-            className="text-mint-600/70 hover:text-mint-600"
+            className="text-accent-400/70 hover:text-accent-400"
           >
             ✕
           </button>
@@ -154,21 +158,19 @@ export default function MyBookingsPage() {
       )}
 
       {actionError && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+        <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
           {actionError}
         </p>
       )}
 
       {bookings.length === 0 ? (
-        <div className="rounded-2xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-100">
-          <p className="text-slate-500">Nu ai nicio rezervare încă.</p>
-          <Link
-            to="/"
-            className="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
-          >
-            Caută un teren
-          </Link>
-        </div>
+        <EmptyState
+          icon={<PitchIcon className="h-7 w-7" />}
+          title="Nu ai nicio rezervare încă"
+          description="Caută o bază sportivă și rezervă primul tău meci."
+          actionLabel="Caută un teren"
+          actionTo="/"
+        />
       ) : (
         <>
           <section>
@@ -176,7 +178,7 @@ export default function MyBookingsPage() {
               Următoarele rezervări
             </h2>
             {upcoming.length === 0 ? (
-              <p className="text-sm text-slate-400">Nu ai rezervări viitoare.</p>
+              <p className="text-sm text-slate-500">Nu ai rezervări viitoare.</p>
             ) : (
               <ul className="space-y-3">{upcoming.map(renderCard)}</ul>
             )}

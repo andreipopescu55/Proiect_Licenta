@@ -51,17 +51,16 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-xl ring-1 ring-slate-100">
-        <Link to="/" className="mb-6 flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 font-bold text-white">
-            R
+    <div className="flex min-h-screen items-center justify-center bg-ink p-6">
+      <div className="w-full max-w-sm rounded-2xl bg-panel p-8 shadow-xl ring-1 ring-line">
+        <Link to="/" className="mb-6 inline-block">
+          <span className="text-lg font-extrabold uppercase tracking-tight text-accent-400">
+            Fluier Final
           </span>
-          <span className="text-base font-extrabold text-slate-900">Rezervări Terenuri</span>
         </Link>
 
-        <h1 className="text-2xl font-extrabold text-slate-900">Autentificare</h1>
-        <p className="mt-1 text-sm text-slate-500">Intră în contul tău.</p>
+        <h1 className="text-2xl font-extrabold text-white">Autentificare</h1>
+        <p className="mt-1 text-sm text-slate-400">Intră în contul tău.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <FormField
@@ -84,7 +83,7 @@ export default function LoginPage() {
           />
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
               {error}
             </p>
           )}
@@ -92,15 +91,15 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+            className="w-full rounded-lg bg-accent-400 px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:opacity-50"
           >
             {submitting ? 'Se autentifică…' : 'Autentificare'}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-slate-400">
           Nu ai cont?{' '}
-          <Link to="/register" className="font-semibold text-brand-600 hover:underline">
+          <Link to="/register" className="font-semibold text-accent-400 hover:text-accent-300">
             Creează unul
           </Link>
         </p>
