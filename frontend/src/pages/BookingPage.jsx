@@ -16,15 +16,14 @@ import {
   toDateStr,
 } from '../lib/booking'
 
-// Antet de pas numerotat (1. Data, 2. Oră…) — claritate / progressive disclosure.
 function StepHeader({ n, title, hint }) {
   return (
     <div className="mb-3 flex items-center gap-2.5">
-      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-accent-400/15 text-xs font-bold text-accent-400">
         {n}
       </span>
-      <h2 className="text-sm font-bold text-slate-800">{title}</h2>
-      {hint && <span className="text-xs text-slate-400">{hint}</span>}
+      <h2 className="text-sm font-bold text-slate-100">{title}</h2>
+      {hint && <span className="text-xs text-slate-500">{hint}</span>}
     </div>
   )
 }
@@ -40,17 +39,14 @@ export default function BookingPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  // Starea selectiei
   const [date, setDate] = useState('')
   const [startMin, setStartMin] = useState(null)
   const [duration, setDuration] = useState(null)
 
-  // Sloturi care au dat 409 (deja rezervate) — le marcam local ca indisponibile.
   const [takenStarts, setTakenStarts] = useState(new Set())
   const [submitting, setSubmitting] = useState(false)
   const [formError, setFormError] = useState(null)
 
-  // 1) Incarcam terenul + regulile de pret.
   useEffect(() => {
     let active = true
     Promise.all([getField(fieldId), getFieldPricing(fieldId)])
@@ -58,7 +54,6 @@ export default function BookingPage() {
         if (!active) return
         setField(f)
         setRules(p)
-        // pornim pe prima zi cu sloturi inca disponibile (sare peste azi daca s-a terminat)
         setDate(defaultBookingDate(p, f.slot_duration_minutes, f.min_booking_minutes))
       })
       .catch(() => active && setError('Terenul nu a fost găsit.'))
@@ -72,24 +67,20 @@ export default function BookingPage() {
   const minBooking = field?.min_booking_minutes ?? 60
   const dow = date ? dowFromDate(date) : null
 
-  // Sloturile zilei (minute de start) derivate din tarife.
   const slots = useMemo(
     () => (date ? buildDaySlots(rules, dow, slotDuration) : []),
     [rules, date, dow, slotDuration],
   )
 
-  // Optiuni de durata: multipli ai slotului, de la minimul terenului pana la 4h.
   const durationOptions = useMemo(() => {
     const opts = []
     for (let d = minBooking; d <= 240; d += slotDuration) opts.push(d)
     return opts
   }, [minBooking, slotDuration])
 
-  // Dezactivam sloturile din trecut daca data aleasa e azi.
   const todayStr = toDateStr(new Date())
   const nowMin = new Date().getHours() * 60 + new Date().getMinutes()
 
-  // Pretul estimat pentru selectia curenta (null = interval neacoperit/indisponibil).
   const price =
     startMin != null && duration != null
       ? estimatePrice(rules, dow, startMin, duration, slotDuration)
@@ -144,7 +135,7 @@ export default function BookingPage() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-4 w-24" />
-        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
           <div className="space-y-6">
             <Skeleton className="h-24 w-full rounded-2xl" />
             <Skeleton className="h-28 w-full rounded-2xl" />
@@ -155,41 +146,40 @@ export default function BookingPage() {
       </div>
     )
   }
-  if (error) return <p className="text-red-600">{error}</p>
+  if (error) return <p className="text-red-400">{error}</p>
   if (!field) return null
 
-  const cardCls = 'rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-100'
+  const cardCls = 'rounded-2xl bg-panel p-6 ring-1 ring-line'
 
   return (
     <div className="space-y-6">
       <button
         type="button"
         onClick={() => navigate(-1)}
-        className="inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition hover:text-brand-700"
+        className="inline-flex items-center gap-1 text-sm font-semibold text-accent-400 transition hover:text-accent-300"
       >
         <ArrowLeftIcon className="h-4 w-4" /> Înapoi
       </button>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        {/* Coloana stanga: selectie */}
         <div className="space-y-6">
           {/* Antet teren */}
-          <section className="animate-fade-in-up overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
-            <div className="h-2 bg-gradient-to-r from-brand-500 to-brand-700" />
+          <section className="animate-fade-in-up overflow-hidden rounded-2xl bg-panel ring-1 ring-line">
+            <div className="h-2 bg-gradient-to-r from-accent-500 to-accent-400" />
             <div className="flex items-center gap-4 p-6">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent-400/10 text-accent-400">
                 <PitchIcon className="h-6 w-6" />
               </span>
               <div>
-                <h1 className="text-xl font-extrabold text-slate-900">{field.name}</h1>
+                <h1 className="text-xl font-extrabold text-white">{field.name}</h1>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
+                  <span className="rounded-full bg-accent-400/10 px-2.5 py-1 text-xs font-semibold text-accent-400">
                     {fieldFormat(field)}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                  <span className="rounded-full bg-panel-2 px-2.5 py-1 text-xs font-semibold text-slate-300">
                     {SURFACE_LABELS[field.surface_type] ?? field.surface_type}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                  <span className="rounded-full bg-panel-2 px-2.5 py-1 text-xs font-semibold text-slate-300">
                     {field.is_indoor ? 'Acoperit' : 'În aer liber'}
                   </span>
                 </div>
@@ -206,10 +196,10 @@ export default function BookingPage() {
                 value={date}
                 min={todayStr}
                 onChange={onChangeDate}
-                className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-slate-200 outline-none transition [color-scheme:dark] focus:border-accent-400"
               />
               {date && (
-                <span className="rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-semibold capitalize text-brand-700">
+                <span className="rounded-lg bg-accent-400/10 px-3 py-1.5 text-sm font-semibold capitalize text-accent-400">
                   {formatDateRo(date)}
                 </span>
               )}
@@ -220,7 +210,7 @@ export default function BookingPage() {
           <section className={cardCls}>
             <StepHeader n={2} title="Ora de început" hint={slots.length > 0 ? `${slots.length} sloturi` : undefined} />
             {slots.length === 0 ? (
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-400">
                 Nu există tarife (deci nici sloturi) pentru această zi. Alege altă dată.
               </p>
             ) : (
@@ -243,10 +233,10 @@ export default function BookingPage() {
                       className={[
                         'rounded-lg px-2 py-2 text-sm font-semibold transition',
                         selected
-                          ? 'scale-105 bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                          ? 'scale-105 bg-accent-400 text-ink shadow-md shadow-accent-400/20'
                           : disabled
-                            ? 'cursor-not-allowed bg-slate-50 text-slate-300 line-through'
-                            : 'bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700',
+                            ? 'cursor-not-allowed bg-panel-2/50 text-slate-600 line-through'
+                            : 'bg-panel-2 text-slate-200 hover:bg-accent-400/10 hover:text-accent-400',
                       ].join(' ')}
                     >
                       {minutesToTime(m)}
@@ -275,10 +265,10 @@ export default function BookingPage() {
                       className={[
                         'rounded-lg px-3.5 py-2 text-sm font-semibold transition',
                         selected
-                          ? 'bg-brand-600 text-white shadow-md shadow-brand-600/30'
+                          ? 'bg-accent-400 text-ink shadow-md shadow-accent-400/20'
                           : ok
-                            ? 'bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700'
-                            : 'cursor-not-allowed bg-slate-50 text-slate-300',
+                            ? 'bg-panel-2 text-slate-200 hover:bg-accent-400/10 hover:text-accent-400'
+                            : 'cursor-not-allowed bg-panel-2/50 text-slate-600',
                       ].join(' ')}
                     >
                       {d % 60 === 0 ? `${d / 60}h` : `${Math.floor(d / 60)}h${d % 60}`}
@@ -290,26 +280,26 @@ export default function BookingPage() {
           )}
         </div>
 
-        {/* Coloana dreapta: sumar */}
-        <aside className="h-fit overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 lg:sticky lg:top-20">
-          <div className="border-b border-slate-100 bg-slate-50/60 px-6 py-4">
-            <h2 className="text-base font-bold text-slate-900">Sumar rezervare</h2>
+        {/* Sumar */}
+        <aside className="h-fit overflow-hidden rounded-2xl bg-panel ring-1 ring-line lg:sticky lg:top-20">
+          <div className="border-b border-line bg-panel-2/50 px-6 py-4">
+            <h2 className="text-base font-bold text-white">Sumar rezervare</h2>
           </div>
           <div className="p-6">
             <dl className="space-y-3 text-sm">
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Teren</dt>
-                <dd className="text-right font-semibold text-slate-900">{field.name}</dd>
+                <dt className="text-slate-400">Teren</dt>
+                <dd className="text-right font-semibold text-white">{field.name}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Data</dt>
-                <dd className="text-right font-semibold capitalize text-slate-900">
+                <dt className="text-slate-400">Data</dt>
+                <dd className="text-right font-semibold capitalize text-white">
                   {date ? formatDateRo(date) : '—'}
                 </dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-slate-500">Interval</dt>
-                <dd className="text-right font-semibold text-slate-900">
+                <dt className="text-slate-400">Interval</dt>
+                <dd className="text-right font-semibold text-white">
                   {startMin != null && duration != null
                     ? `${minutesToTime(startMin)}–${minutesToTime(startMin + duration)}`
                     : '—'}
@@ -317,17 +307,17 @@ export default function BookingPage() {
               </div>
             </dl>
 
-            <div className="mt-5 rounded-xl bg-gradient-to-br from-brand-50 to-mint-50 p-4">
+            <div className="mt-5 rounded-xl border border-line bg-panel-2 p-4">
               <div className="flex items-baseline justify-between">
-                <span className="text-sm font-medium text-slate-600">Preț estimat</span>
-                <span className="text-2xl font-extrabold text-slate-900">
+                <span className="text-sm font-medium text-slate-400">Preț estimat</span>
+                <span className="text-2xl font-extrabold text-accent-400">
                   {price != null ? `${price.toFixed(2)} RON` : '—'}
                 </span>
               </div>
             </div>
 
             {formError && (
-              <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+              <p className="mt-4 rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
                 {formError}
               </p>
             )}
@@ -335,12 +325,12 @@ export default function BookingPage() {
             <button
               onClick={handleBooking}
               disabled={submitting || startMin == null || duration == null || price == null}
-              className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-brand-600/20 transition hover:from-brand-700 hover:to-brand-600 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+              className="mt-5 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent-400 px-4 py-3 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:cursor-not-allowed disabled:opacity-40"
             >
               {submitting ? 'Se rezervă…' : user ? 'Rezervă' : 'Autentifică-te ca să rezervi'}
               {!submitting && <ArrowRightIcon className="h-4 w-4" />}
             </button>
-            <p className="mt-3 text-center text-xs text-slate-400">
+            <p className="mt-3 text-center text-xs text-slate-500">
               Prețul final e confirmat de server la rezervare.
             </p>
           </div>
