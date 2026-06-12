@@ -91,3 +91,51 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================
+   FullCalendar — tema dark (Fluier Final)
+   ============================================ */
+.fc {
+  --fc-border-color: var(--color-line);
+  --fc-page-bg-color: transparent;
+  --fc-neutral-bg-color: var(--color-panel-2);
+  --fc-today-bg-color: rgba(200, 250, 60, 0.06);
+  --fc-now-indicator-color: var(--color-accent-400);
+  color: #cbd5e1; /* slate-300 */
+}
+.fc .fc-toolbar-title { color: #fff; font-weight: 800; }
+.fc .fc-col-header-cell-cushion,
+.fc .fc-timegrid-axis-cushion,
+.fc .fc-timegrid-slot-label-cushion,
+.fc .fc-daygrid-day-number,
+.fc .fc-list-day-text { color: #94a3b8; } /* slate-400 */
+.fc .fc-col-header-cell-cushion { font-weight: 600; }
+
+/* Butoanele de control */
+.fc .fc-button-primary {
+  background-color: var(--color-panel-2);
+  border-color: var(--color-line);
+  color: #e2e8f0;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.fc .fc-button-primary:hover {
+  background-color: var(--color-line);
+  border-color: var(--color-line-2);
+  color: #fff;
+}
+.fc .fc-button-primary:disabled {
+  background-color: var(--color-panel-2);
+  border-color: var(--color-line);
+  opacity: 0.5;
+}
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--color-accent-400);
+  border-color: var(--color-accent-400);
+  color: var(--color-ink);
+}
+.fc .fc-button-primary:focus,
+.fc .fc-button-primary:not(:disabled).fc-button-active:focus {
+  box-shadow: 0 0 0 2px rgba(200, 250, 60, 0.3);
+}

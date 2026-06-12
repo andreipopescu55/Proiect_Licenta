@@ -5,8 +5,6 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import { getFieldCalendar, blockInterval } from '../../api/resources'
 
-// Date -> "YYYY-MM-DDTHH:MM:SS" in ora LOCALA (fara conversie UTC).
-// Backend-ul interpreteaza string-ul ca ora Bucuresti, exact ce afiseaza calendarul.
 function toLocalNaive(d) {
   const p = (n) => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`
@@ -22,17 +20,12 @@ function fmtRange(start, end) {
 export default function CalendarPanel({ fieldId }) {
   const calendarRef = useRef(null)
 
-  // Modal de blocare manuala: {start, end} (Date) cand selectezi un interval.
   const [blockSel, setBlockSel] = useState(null)
   const [blockNotes, setBlockNotes] = useState('')
   const [blocking, setBlocking] = useState(false)
   const [blockError, setBlockError] = useState(null)
-
-  // Detalii eveniment la click (rezervare sau blocaj).
   const [detail, setDetail] = useState(null)
 
-  // FullCalendar cere evenimentele printr-o functie; e re-apelata la schimbarea
-  // intervalului vizibil. Trimitem from/to ca ora locala.
   function loadEvents(info, success, failure) {
     getFieldCalendar(fieldId, toLocalNaive(info.start), toLocalNaive(info.end))
       .then((events) => success(events))
@@ -70,10 +63,10 @@ export default function CalendarPanel({ fieldId }) {
   }
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 sm:p-6">
+    <section className="rounded-2xl bg-panel p-4 ring-1 ring-line sm:p-6">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900">Calendar rezervări</h2>
-        <p className="text-xs text-slate-400">
+        <h2 className="text-lg font-bold text-white">Calendar rezervări</h2>
+        <p className="text-xs text-slate-500">
           Selectează un interval gol ca să-l blochezi (întreținere, eveniment privat).
         </p>
       </div>
@@ -113,20 +106,20 @@ export default function CalendarPanel({ fieldId }) {
       {/* Modal blocare manuala */}
       {blockSel && (
         <Modal onClose={() => setBlockSel(null)}>
-          <h3 className="text-lg font-bold text-slate-900">Blochează interval</h3>
-          <p className="mt-1 text-sm text-slate-500">{fmtRange(blockSel.start, blockSel.end)}</p>
+          <h3 className="text-lg font-bold text-white">Blochează interval</h3>
+          <p className="mt-1 text-sm text-slate-400">{fmtRange(blockSel.start, blockSel.end)}</p>
           <label className="mt-4 block">
-            <span className="mb-1 block text-sm font-semibold text-slate-700">Motiv (opțional)</span>
+            <span className="mb-1 block text-sm font-semibold text-slate-300">Motiv (opțional)</span>
             <input
               type="text"
               value={blockNotes}
               onChange={(e) => setBlockNotes(e.target.value)}
               placeholder="ex: întreținere, eveniment privat"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-accent-400"
             />
           </label>
           {blockError && (
-            <p className="mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+            <p className="mt-3 rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
               {blockError}
             </p>
           )}
@@ -134,7 +127,7 @@ export default function CalendarPanel({ fieldId }) {
             <button
               type="button"
               onClick={() => setBlockSel(null)}
-              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+              className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-panel-2"
             >
               Renunță
             </button>
@@ -142,7 +135,7 @@ export default function CalendarPanel({ fieldId }) {
               type="button"
               onClick={confirmBlock}
               disabled={blocking}
-              className="rounded-lg bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
+              className="rounded-lg bg-accent-400 px-4 py-2 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:opacity-50"
             >
               {blocking ? 'Se blochează…' : 'Blochează'}
             </button>
@@ -153,7 +146,7 @@ export default function CalendarPanel({ fieldId }) {
       {/* Modal detalii eveniment */}
       {detail && (
         <Modal onClose={() => setDetail(null)}>
-          <h3 className="text-lg font-bold text-slate-900">{detail.title}</h3>
+          <h3 className="text-lg font-bold text-white">{detail.title}</h3>
           <dl className="mt-3 space-y-1.5 text-sm">
             <Row label="Interval" value={detail.range} />
             <Row label="Tip" value={detail.source === 'manual' ? 'Blocaj manual' : 'Rezervare online'} />
@@ -169,7 +162,7 @@ export default function CalendarPanel({ fieldId }) {
             <button
               type="button"
               onClick={() => setDetail(null)}
-              className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
+              className="rounded-lg bg-accent-400 px-4 py-2 text-sm font-bold text-ink transition hover:bg-accent-300"
             >
               Închide
             </button>
@@ -183,8 +176,8 @@ export default function CalendarPanel({ fieldId }) {
 function Row({ label, value }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="text-right font-semibold text-slate-900">{value}</dd>
+      <dt className="text-slate-400">{label}</dt>
+      <dd className="text-right font-semibold text-white">{value}</dd>
     </div>
   )
 }
@@ -192,11 +185,11 @@ function Row({ label, value }) {
 function Modal({ children, onClose }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-md rounded-2xl bg-panel p-6 shadow-xl ring-1 ring-line"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

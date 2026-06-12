@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { listAllVenues, setVenueStatus } from '../../api/resources'
 
 const STATUS = {
-  pending: { label: 'În așteptare', cls: 'bg-amber-100 text-amber-800' },
-  approved: { label: 'Aprobată', cls: 'bg-mint-50 text-mint-600' },
-  suspended: { label: 'Suspendată', cls: 'bg-red-100 text-red-700' },
+  pending: { label: 'În așteptare', cls: 'bg-amber-400/15 text-amber-300' },
+  approved: { label: 'Aprobată', cls: 'bg-accent-400/15 text-accent-400' },
+  suspended: { label: 'Suspendată', cls: 'bg-red-500/15 text-red-400' },
 }
 
 const TABS = [
@@ -40,7 +40,6 @@ export default function VenueModeration() {
     try {
       const updated = await setVenueStatus(venue.id, status)
       setVenues((prev) =>
-        // dacă suntem pe un filtru, scoatem baza care nu mai corespunde
         prev
           .map((v) => (v.id === updated.id ? updated : v))
           .filter((v) => !tab || v.status === tab),
@@ -55,12 +54,12 @@ export default function VenueModeration() {
   const pendingCount = venues.filter((v) => v.status === 'pending').length
 
   return (
-    <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 sm:p-6">
+    <section className="rounded-2xl bg-panel p-4 ring-1 ring-line sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-bold text-slate-900">
+        <h2 className="text-lg font-bold text-white">
           Moderare baze sportive
           {tab === '' && pendingCount > 0 && (
-            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800">
+            <span className="ml-2 rounded-full bg-amber-400/15 px-2 py-0.5 text-xs font-semibold text-amber-300">
               {pendingCount} în așteptare
             </span>
           )}
@@ -77,8 +76,8 @@ export default function VenueModeration() {
             className={[
               'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
               tab === t.key
-                ? 'bg-slate-800 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+                ? 'bg-accent-400 text-ink'
+                : 'bg-panel-2 text-slate-300 hover:text-white',
             ].join(' ')}
           >
             {t.label}
@@ -87,28 +86,28 @@ export default function VenueModeration() {
       </div>
 
       {loading ? (
-        <p className="mt-4 text-sm text-slate-500">Se încarcă…</p>
+        <p className="mt-4 text-sm text-slate-400">Se încarcă…</p>
       ) : error ? (
-        <p className="mt-4 text-sm text-red-600">{error}</p>
+        <p className="mt-4 text-sm text-red-400">{error}</p>
       ) : venues.length === 0 ? (
-        <p className="mt-4 text-sm text-slate-500">Nicio bază în această categorie.</p>
+        <p className="mt-4 text-sm text-slate-400">Nicio bază în această categorie.</p>
       ) : (
         <ul className="mt-4 space-y-2">
           {venues.map((v) => {
-            const st = STATUS[v.status] ?? { label: v.status, cls: 'bg-slate-100 text-slate-600' }
+            const st = STATUS[v.status] ?? { label: v.status, cls: 'bg-panel-2 text-slate-400' }
             return (
               <li
                 key={v.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-100 p-3"
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line p-3"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-slate-900">{v.name}</span>
+                    <span className="font-semibold text-white">{v.name}</span>
                     <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${st.cls}`}>
                       {st.label}
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-slate-400">
                     {v.city}, {v.county}
                   </p>
                 </div>
@@ -119,7 +118,7 @@ export default function VenueModeration() {
                       type="button"
                       onClick={() => changeStatus(v, 'approved')}
                       disabled={busyId === v.id}
-                      className="rounded-lg bg-mint-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
+                      className="rounded-lg bg-accent-400 px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:opacity-50"
                     >
                       {v.status === 'suspended' ? 'Reactivează' : 'Aprobă'}
                     </button>
@@ -129,7 +128,7 @@ export default function VenueModeration() {
                       type="button"
                       onClick={() => changeStatus(v, 'suspended')}
                       disabled={busyId === v.id}
-                      className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                      className="rounded-lg border border-red-500/30 px-3 py-1.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
                     >
                       Suspendă
                     </button>

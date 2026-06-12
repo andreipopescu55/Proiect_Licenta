@@ -3,6 +3,9 @@ import { createVenue, updateVenue } from '../../api/resources'
 
 const hhmm = (t) => (t ? t.slice(0, 5) : '')
 
+const inputCls =
+  'w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-accent-400 [color-scheme:dark]'
+
 export default function VenueFormModal({ venue, onClose, onSaved }) {
   const isEdit = Boolean(venue)
   const [form, setForm] = useState({
@@ -58,19 +61,19 @@ export default function VenueFormModal({ venue, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-white p-6 shadow-xl"
+        className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-2xl bg-panel p-6 shadow-xl ring-1 ring-line"
       >
-        <h3 className="text-lg font-bold text-slate-900">
+        <h3 className="text-lg font-bold text-white">
           {isEdit ? 'Editează baza sportivă' : 'Bază sportivă nouă'}
         </h3>
         {!isEdit && (
-          <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <p className="rounded-lg bg-amber-400/10 px-3 py-2 text-sm text-amber-300 ring-1 ring-amber-400/20">
             Baza nouă pornește cu status <strong>„În așteptare"</strong> și devine vizibilă public
             după aprobarea de către un administrator al platformei.
           </p>
@@ -129,21 +132,23 @@ export default function VenueFormModal({ venue, onClose, onSaved }) {
         </div>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>
+          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
+            {error}
+          </p>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-panel-2"
           >
             Renunță
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
+            className="rounded-lg bg-accent-400 px-4 py-2 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:opacity-50"
           >
             {saving ? 'Se salvează…' : isEdit ? 'Salvează' : 'Creează'}
           </button>
@@ -153,13 +158,10 @@ export default function VenueFormModal({ venue, onClose, onSaved }) {
   )
 }
 
-const inputCls =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100'
-
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-semibold text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-semibold text-slate-300">{label}</span>
       {children}
     </label>
   )

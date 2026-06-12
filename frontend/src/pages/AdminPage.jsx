@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { listMyVenues, listVenueFieldsManage, deleteField } from '../api/resources'
 import { SURFACE_LABELS, fieldFormat } from '../lib/labels'
+import { Skeleton } from '../components/ui/Skeleton'
 import CalendarPanel from '../components/admin/CalendarPanel'
 import PricingPanel from '../components/admin/PricingPanel'
 import FieldFormModal from '../components/admin/FieldFormModal'
@@ -10,10 +11,16 @@ import SubscriptionPanel from '../components/admin/SubscriptionPanel'
 import VenueModeration from '../components/admin/VenueModeration'
 
 const VENUE_STATUS = {
-  pending: { label: 'În așteptare', cls: 'bg-amber-100 text-amber-800' },
-  approved: { label: 'Aprobată', cls: 'bg-mint-50 text-mint-600' },
-  suspended: { label: 'Suspendată', cls: 'bg-red-100 text-red-700' },
+  pending: { label: 'În așteptare', cls: 'bg-amber-400/15 text-amber-300' },
+  approved: { label: 'Aprobată', cls: 'bg-accent-400/15 text-accent-400' },
+  suspended: { label: 'Suspendată', cls: 'bg-red-500/15 text-red-400' },
 }
+
+const panelCls = 'rounded-2xl bg-panel ring-1 ring-line'
+const ghostBtn =
+  'rounded-lg bg-panel-2 px-3 py-1.5 text-sm font-semibold text-slate-200 transition hover:text-white'
+const dashedBtn =
+  'rounded-lg border border-dashed border-line px-3 py-1.5 text-sm font-semibold text-accent-400 transition hover:bg-accent-400/10'
 
 export default function AdminPage() {
   const { user } = useAuth()
@@ -28,13 +35,10 @@ export default function AdminPage() {
   const [error, setError] = useState(null)
   const [fieldsError, setFieldsError] = useState(null)
 
-  // Modal teren: { field } (field=null -> creare)
   const [fieldModal, setFieldModal] = useState(null)
-  // Modal bază: { venue } (venue=null -> creare)
   const [venueModal, setVenueModal] = useState(null)
   const [actionError, setActionError] = useState(null)
 
-  // 1) Bazele mele.
   useEffect(() => {
     let active = true
     listMyVenues()
@@ -50,7 +54,6 @@ export default function AdminPage() {
     }
   }, [])
 
-  // 2) Terenurile bazei selectate (toate, inclusiv inactive).
   useEffect(() => {
     if (!venueId) return
     let active = true
@@ -103,20 +106,27 @@ export default function AdminPage() {
         return next
       })
     } catch (err) {
-      // Backend-ul trimite un mesaj clar (ex: teren cu rezervari -> 409).
       setActionError(err.response?.data?.detail || 'Ștergerea a eșuat. Încearcă din nou.')
     }
   }
 
-  if (loading) return <p className="text-slate-500">Se încarcă…</p>
-  if (error) return <p className="text-red-600">{error}</p>
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-28 w-full rounded-2xl" />
+        <Skeleton className="h-96 w-full rounded-2xl" />
+      </div>
+    )
+  }
+  if (error) return <p className="text-red-400">{error}</p>
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-slate-900">Dashboard administrator</h1>
+        <h1 className="text-2xl font-extrabold text-white">Dashboard administrator</h1>
         {isSuperAdmin && (
-          <span className="rounded-full bg-mint-50 px-3 py-1 text-xs font-semibold text-mint-600">
+          <span className="rounded-full bg-accent-400/10 px-3 py-1 text-xs font-semibold text-accent-400">
             mod Super Admin
           </span>
         )}
@@ -127,12 +137,12 @@ export default function AdminPage() {
 
       {venues.length === 0 ? (
         isSuperAdmin ? null : (
-          <div className="rounded-2xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-100">
-            <p className="text-slate-500">Nu ai nicio bază sportivă încă.</p>
+          <div className={`${panelCls} p-10 text-center`}>
+            <p className="text-slate-400">Nu ai nicio bază sportivă încă.</p>
             <button
               type="button"
               onClick={() => setVenueModal({ venue: null })}
-              className="mt-4 inline-block rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="mt-4 inline-block rounded-lg bg-accent-400 px-4 py-2 text-sm font-bold text-ink transition hover:bg-accent-300"
             >
               + Adaugă prima bază
             </button>
@@ -141,14 +151,14 @@ export default function AdminPage() {
       ) : (
         <>
           {/* Selector bază + terenuri */}
-          <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 sm:p-6">
+          <section className={`${panelCls} p-4 sm:p-6`}>
             <div className="flex flex-wrap items-end gap-4">
               <label className="block">
-                <span className="mb-1 block text-sm font-semibold text-slate-700">Bază sportivă</span>
+                <span className="mb-1 block text-sm font-semibold text-slate-300">Bază sportivă</span>
                 <select
                   value={venueId}
                   onChange={(e) => setVenueId(e.target.value)}
-                  className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+                  className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-slate-200 outline-none focus:border-accent-400"
                 >
                   {venues.map((v) => (
                     <option key={v.id} value={v.id}>
@@ -160,7 +170,7 @@ export default function AdminPage() {
               {selectedVenue && (
                 <span
                   className={`mb-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
-                    VENUE_STATUS[selectedVenue.status]?.cls ?? 'bg-slate-100 text-slate-600'
+                    VENUE_STATUS[selectedVenue.status]?.cls ?? 'bg-panel-2 text-slate-400'
                   }`}
                 >
                   {VENUE_STATUS[selectedVenue.status]?.label ?? selectedVenue.status}
@@ -169,19 +179,11 @@ export default function AdminPage() {
 
               <div className="mb-1 ml-auto flex gap-2">
                 {selectedVenue && (
-                  <button
-                    type="button"
-                    onClick={() => setVenueModal({ venue: selectedVenue })}
-                    className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                  >
+                  <button type="button" onClick={() => setVenueModal({ venue: selectedVenue })} className={ghostBtn}>
                     Editează baza
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={() => setVenueModal({ venue: null })}
-                  className="rounded-lg border border-dashed border-brand-300 px-3 py-1.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-50"
-                >
+                <button type="button" onClick={() => setVenueModal({ venue: null })} className={dashedBtn}>
                   + Bază nouă
                 </button>
               </div>
@@ -199,9 +201,9 @@ export default function AdminPage() {
                     className={[
                       'rounded-lg px-3 py-1.5 text-sm font-semibold transition',
                       selected
-                        ? 'bg-brand-600 text-white'
-                        : 'bg-slate-100 text-slate-700 hover:bg-brand-50 hover:text-brand-700',
-                      !f.is_active ? 'opacity-60' : '',
+                        ? 'bg-accent-400 text-ink'
+                        : 'bg-panel-2 text-slate-200 hover:bg-accent-400/10 hover:text-accent-400',
+                      !f.is_active ? 'opacity-50' : '',
                     ].join(' ')}
                   >
                     {f.name}
@@ -209,17 +211,13 @@ export default function AdminPage() {
                   </button>
                 )
               })}
-              <button
-                type="button"
-                onClick={() => setFieldModal({ field: null })}
-                className="rounded-lg border border-dashed border-brand-300 px-3 py-1.5 text-sm font-semibold text-brand-600 transition hover:bg-brand-50"
-              >
+              <button type="button" onClick={() => setFieldModal({ field: null })} className={dashedBtn}>
                 + Adaugă teren
               </button>
             </div>
 
-            {fieldsError && <p className="mt-4 text-sm text-slate-500">{fieldsError}</p>}
-            {actionError && <p className="mt-3 text-sm text-red-600">{actionError}</p>}
+            {fieldsError && <p className="mt-4 text-sm text-slate-400">{fieldsError}</p>}
+            {actionError && <p className="mt-3 text-sm text-red-400">{actionError}</p>}
           </section>
 
           {/* Abonament (nivel bază) */}
@@ -228,35 +226,31 @@ export default function AdminPage() {
           {selectedField && (
             <>
               {/* Setări teren */}
-              <section className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 sm:p-6">
+              <section className={`${panelCls} p-4 sm:p-6`}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">{selectedField.name}</h2>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <h2 className="text-lg font-bold text-white">{selectedField.name}</h2>
+                    <p className="mt-1 text-sm text-slate-400">
                       {fieldFormat(selectedField)} ·{' '}
                       {SURFACE_LABELS[selectedField.surface_type] ?? selectedField.surface_type} ·{' '}
                       {selectedField.is_indoor ? 'Acoperit' : 'În aer liber'} · slot{' '}
                       {selectedField.slot_duration_minutes} min · minim{' '}
                       {selectedField.min_booking_minutes} min
                       {!selectedField.is_active && (
-                        <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                        <span className="ml-2 rounded-full bg-panel-2 px-2 py-0.5 text-xs font-semibold text-slate-400">
                           inactiv
                         </span>
                       )}
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFieldModal({ field: selectedField })}
-                      className="rounded-lg bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200"
-                    >
+                    <button type="button" onClick={() => setFieldModal({ field: selectedField })} className={ghostBtn}>
                       Editează
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteField(selectedField)}
-                      className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                      className="rounded-lg border border-red-500/30 px-3 py-1.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10"
                     >
                       Șterge
                     </button>

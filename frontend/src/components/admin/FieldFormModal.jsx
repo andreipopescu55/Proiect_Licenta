@@ -5,16 +5,16 @@ import { SPORT_LABELS, SURFACE_LABELS, SPORT_BY_LABEL } from '../../lib/labels'
 const SURFACE_OPTIONS = Object.entries(SURFACE_LABELS)
 const FORMAT_SUGGESTIONS = Object.keys(SPORT_BY_LABEL) // Fotbal 5+1 / 7+1 / 11+1
 
-// Valori posibile pentru durate (in minute). Slotul trebuie sa dividă min_booking.
 const SLOT_OPTIONS = [15, 30, 60]
 const MIN_BOOKING_OPTIONS = [30, 60, 90, 120]
+
+const inputCls =
+  'w-full rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-white placeholder:text-slate-500 outline-none focus:border-accent-400 [color-scheme:dark]'
 
 export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
   const isEdit = Boolean(field)
   const [form, setForm] = useState({
     name: field?.name ?? '',
-    // Recomandare libera; pentru terenuri existente fara recomandare, pornim de la
-    // eticheta structurata curenta ca sa nu para gol la editare.
     recommended_format: field?.recommended_format ?? (field ? (SPORT_LABELS[field.sport_type] ?? '') : ''),
     surface_type: field?.surface_type ?? 'synthetic_grass',
     is_indoor: field?.is_indoor ?? false,
@@ -33,7 +33,6 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
     e.preventDefault()
     setError(null)
 
-    // Validare client-side: durata minima trebuie sa fie multiplu de slot.
     if (form.min_booking_minutes % form.slot_duration_minutes !== 0) {
       setError('Durata minimă trebuie să fie multiplu al duratei slotului.')
       return
@@ -42,8 +41,6 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
     const rec = form.recommended_format.trim()
     const payload = {
       name: form.name.trim(),
-      // recomandarea libera (poate fi goala); sport_type = categoria derivata,
-      // standard daca recomandarea e una cunoscuta, altfel implicit Fotbal 5+1.
       recommended_format: rec || null,
       sport_type: SPORT_BY_LABEL[rec] ?? 'football_5',
       surface_type: form.surface_type,
@@ -73,17 +70,15 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       onClick={onClose}
     >
       <form
         onClick={(e) => e.stopPropagation()}
         onSubmit={handleSubmit}
-        className="w-full max-w-lg space-y-4 rounded-2xl bg-white p-6 shadow-xl"
+        className="w-full max-w-lg space-y-4 rounded-2xl bg-panel p-6 shadow-xl ring-1 ring-line"
       >
-        <h3 className="text-lg font-bold text-slate-900">
-          {isEdit ? 'Editează terenul' : 'Teren nou'}
-        </h3>
+        <h3 className="text-lg font-bold text-white">{isEdit ? 'Editează terenul' : 'Teren nou'}</h3>
 
         <Field label="Nume">
           <input
@@ -92,7 +87,7 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
             placeholder="ex: Terenul 2"
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+            className={inputCls}
           />
         </Field>
 
@@ -104,7 +99,7 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
               value={form.recommended_format}
               onChange={(e) => set('recommended_format', e.target.value)}
               placeholder="ex: 5+1"
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
+              className={inputCls}
             />
             <datalist id="format-suggestions">
               {FORMAT_SUGGESTIONS.map((s) => (
@@ -116,7 +111,7 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
             <Select value={form.surface_type} onChange={(v) => set('surface_type', v)} options={SURFACE_OPTIONS} />
           </Field>
         </div>
-        <p className="-mt-2 text-xs text-slate-400">
+        <p className="-mt-2 text-xs text-slate-500">
           Recomandare pentru jucători (ex: „5+1" = 5 + portar). Poți alege o sugestie,
           tasta liber sau lăsa gol.
         </p>
@@ -139,32 +134,34 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
         </div>
 
         <div className="flex gap-6">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input type="checkbox" checked={form.is_indoor} onChange={(e) => set('is_indoor', e.target.checked)} />
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <input type="checkbox" checked={form.is_indoor} onChange={(e) => set('is_indoor', e.target.checked)} className="accent-[var(--color-accent-400)]" />
             Acoperit
           </label>
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-            <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} />
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-300">
+            <input type="checkbox" checked={form.is_active} onChange={(e) => set('is_active', e.target.checked)} className="accent-[var(--color-accent-400)]" />
             Activ (vizibil clienților)
           </label>
         </div>
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p>
+          <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm font-medium text-red-400 ring-1 ring-red-500/20">
+            {error}
+          </p>
         )}
 
         <div className="flex justify-end gap-2 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+            className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-300 transition hover:bg-panel-2"
           >
             Renunță
           </button>
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-50"
+            className="rounded-lg bg-accent-400 px-4 py-2 text-sm font-bold text-ink transition hover:bg-accent-300 disabled:opacity-50"
           >
             {saving ? 'Se salvează…' : isEdit ? 'Salvează' : 'Creează'}
           </button>
@@ -177,7 +174,7 @@ export default function FieldFormModal({ venueId, field, onClose, onSaved }) {
 function Field({ label, children }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-semibold text-slate-700">{label}</span>
+      <span className="mb-1 block text-sm font-semibold text-slate-300">{label}</span>
       {children}
     </label>
   )
@@ -185,11 +182,7 @@ function Field({ label, children }) {
 
 function Select({ value, onChange, options }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100"
-    >
+    <select value={value} onChange={(e) => onChange(e.target.value)} className={inputCls}>
       {options.map(([val, label]) => (
         <option key={val} value={val}>
           {label}
