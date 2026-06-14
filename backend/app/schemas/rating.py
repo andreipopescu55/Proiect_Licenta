@@ -22,7 +22,8 @@ class RatingOut(BaseModel):
 
 
 class RatingSummary(BaseModel):
-    """Sumar afisat clientilor: media, numarul de evaluari si (optional) scorul meu."""
+    """Sumar afisat clientilor: media, numarul de evaluari, scorul meu si dreptul de a evalua."""
     average: Optional[float] = None  # None daca nu exista evaluari
     count: int = 0
     my_score: Optional[int] = None   # scorul userului curent, daca e autentificat si a votat
+    can_rate: bool = False           # True daca userul a jucat aici (rezervare trecuta)

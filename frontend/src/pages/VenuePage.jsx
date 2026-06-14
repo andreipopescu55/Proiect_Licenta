@@ -122,7 +122,14 @@ export default function VenuePage() {
                 : 'Fii primul care evaluează.'}
             </p>
           </div>
-          {user ? (
+          {!user ? (
+            <div className="flex flex-col items-end gap-1.5">
+              <StarRating value={rating?.average ?? 0} readOnly size="h-7 w-7" />
+              <Link to="/login" className="text-sm font-semibold text-accent-400 hover:text-accent-300">
+                Autentifică-te ca să evaluezi →
+              </Link>
+            </div>
+          ) : rating?.can_rate ? (
             <div className="text-right">
               <StarRating value={rating?.my_score ?? 0} onRate={handleRate} disabled={ratingBusy} />
               <p className="mt-1 text-xs text-slate-500">
@@ -130,9 +137,12 @@ export default function VenuePage() {
               </p>
             </div>
           ) : (
-            <Link to="/login" className="text-sm font-semibold text-accent-400 hover:text-accent-300">
-              Autentifică-te ca să evaluezi →
-            </Link>
+            <div className="flex flex-col items-end gap-1.5">
+              <StarRating value={rating?.average ?? 0} readOnly size="h-7 w-7" />
+              <p className="max-w-[16rem] text-right text-xs text-slate-500">
+                🔒 Te așteptăm cu o evaluare imediat ce ai terminat de jucat și sesiunea ta s-a încheiat!
+              </p>
+            </div>
           )}
         </div>
       </section>

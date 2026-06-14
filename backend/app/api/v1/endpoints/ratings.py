@@ -31,10 +31,12 @@ def _venue_or_404(venue_id: uuid.UUID, db: Session, require_approved: bool = Fal
 def _summary(db: Session, venue_id: uuid.UUID, user: Optional[User]) -> RatingSummary:
     avg, count = rating_crud.get_summary(db, venue_id)
     my_score = None
+    can_rate = False
     if user is not None:
         existing = rating_crud.get_user_rating(db, venue_id, user.id)
         my_score = existing.score if existing else None
-    return RatingSummary(average=avg, count=count, my_score=my_score)
+        can_rate = rating_crud.user_has_played(db, venue_id, user.id)
+    return RatingSummary(average=avg, count=count, my_score=my_score, can_rate=can_rate)
 
 
 @router.get("", response_model=RatingSummary, summary="Sumar rating (public)")
@@ -55,6 +57,12 @@ def put_rating(
     db: Session = Depends(get_db),
 ):
     _venue_or_404(venue_id, db, require_approved=True)
+    # Poti evalua doar daca ai jucat efectiv aici (rezervare trecuta, neanulata).
+    if not rating_crud.user_has_played(db, venue_id, current_user.id):
+        raise HTTPException(
+            status_code=403,
+            detail="Poți evalua doar după ce ai jucat aici (după ce trece intervalul rezervat).",
+        )
     rating_crud.upsert(db, venue_id, current_user.id, payload.score, payload.comment)
     return _summary(db, venue_id, current_user)
 

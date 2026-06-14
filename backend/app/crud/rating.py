@@ -7,6 +7,30 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.models.rating import Rating
+from app.models.booking import Booking
+from app.models.field import Field
+from app.models.enums import BookingStatus
+
+
+def user_has_played(db: Session, venue_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    """
+    True daca userul are la aceasta baza o rezervare al carei interval S-A TERMINAT
+    deja (end_time < acum) si NU e anulata — adica a jucat efectiv acolo.
+    Conditie ca sa poata lasa un rating.
+    """
+    now = datetime.now(timezone.utc)
+    stmt = (
+        select(Booking.id)
+        .join(Field, Field.id == Booking.field_id)
+        .where(
+            Field.venue_id == venue_id,
+            Booking.user_id == user_id,
+            Booking.end_time < now,
+            Booking.status != BookingStatus.CANCELLED,
+        )
+        .limit(1)
+    )
+    return db.execute(stmt).first() is not None
 
 
 def get_user_rating(db: Session, venue_id: uuid.UUID, user_id: uuid.UUID) -> Optional[Rating]:

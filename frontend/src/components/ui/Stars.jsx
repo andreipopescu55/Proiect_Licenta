@@ -31,9 +31,20 @@ export function RatingBadge({ avg, count, className = '' }) {
   )
 }
 
-// Rând de 5 stele interactiv (hover + click).
-export function StarRating({ value = 0, onRate, disabled = false, size = 'h-8 w-8' }) {
+// Rând de 5 stele. readOnly=true -> doar afisare (media); altfel interactiv (hover + click).
+export function StarRating({ value = 0, onRate, disabled = false, readOnly = false, size = 'h-8 w-8' }) {
   const [hover, setHover] = useState(0)
+
+  if (readOnly) {
+    return (
+      <div className="flex gap-1 text-accent-400" aria-label={`${Number(value).toFixed(1)} din 5`}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <StarShape key={n} filled={n <= Math.round(value)} className={size} />
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div className="flex gap-1" onMouseLeave={() => setHover(0)}>
       {[1, 2, 3, 4, 5].map((n) => (
