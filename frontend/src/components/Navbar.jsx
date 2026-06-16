@@ -35,6 +35,9 @@ export default function Navbar() {
       <NavLink to="/" end className={navLinkClass} onClick={() => setOpen(false)}>
         Acasă
       </NavLink>
+      <NavLink to="/meciuri" className={navLinkClass} onClick={() => setOpen(false)}>
+        Meciuri
+      </NavLink>
       {isClient && (
         <NavLink to="/rezervarile-mele" className={navLinkClass} onClick={() => setOpen(false)}>
           Rezervările mele

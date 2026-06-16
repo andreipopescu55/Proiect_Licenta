@@ -97,3 +97,23 @@ export function CloseIcon({ className = 'h-6 w-6' }) {
     </svg>
   )
 }
+
+// Grup de jucatori — pentru "Find Party" (meciuri deschise).
+export function UsersIcon({ className = 'h-5 w-5' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <circle cx="9" cy="8" r="3.2" />
+      <path d="M3.5 19a5.5 5.5 0 0 1 11 0" />
+      <path d="M16 5.4a3.2 3.2 0 0 1 0 5.2" />
+      <path d="M17.6 19a5.5 5.5 0 0 0-2.6-4.7" />
+    </svg>
+  )
+}
+
+export function CheckIcon({ className = 'h-4 w-4' }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base} aria-hidden="true">
+      <polyline points="4 12 10 18 20 6" />
+    </svg>
+  )
+}

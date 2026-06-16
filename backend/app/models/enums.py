@@ -66,3 +66,25 @@ class NotificationType(str, enum.Enum):
     BOOKING_CONFIRMED = "booking_confirmed"
     BOOKING_CANCELLED = "booking_cancelled"
     BOOKING_REMINDER = "booking_reminder"
+
+
+# ── Find Party (meciuri deschise) ────────────────────────────────────────────────
+class MatchStatus(str, enum.Enum):
+    OPEN = "open"            # caută jucători
+    FULL = "full"           # s-au ocupat toate locurile
+    CANCELLED = "cancelled"  # organizatorul a anulat
+    COMPLETED = "completed"  # meciul a avut loc
+
+
+class MatchSkillLevel(str, enum.Enum):
+    ANY = "any"
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+
+
+class ParticipantStatus(str, enum.Enum):
+    REQUESTED = "requested"  # cerere trimisă, așteaptă aprobare
+    APPROVED = "approved"    # acceptat de organizator (ocupă un loc)
+    REJECTED = "rejected"    # respins / scos de organizator
+    LEFT = "left"            # a ieșit singur din meci

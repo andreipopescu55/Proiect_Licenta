@@ -106,6 +106,48 @@ export function deletePricingRule(ruleId) {
   return api.delete(`/pricing/${ruleId}`).then((r) => r.data)
 }
 
+// ── Matches (Find Party — meciuri deschise) ──────────────────────
+export function listMatches(params) {
+  return api.get('/matches', { params }).then((r) => r.data)
+}
+
+export function listMyMatches() {
+  return api.get('/matches/me').then((r) => r.data)
+}
+
+export function getMatch(matchId) {
+  return api.get(`/matches/${matchId}`).then((r) => r.data)
+}
+
+// Meciul atasat unei rezervari (404 daca nu exista) — folosit pe "Rezervările mele".
+export function getMatchByBooking(bookingId) {
+  return api.get(`/matches/by-booking/${bookingId}`).then((r) => r.data)
+}
+
+export function createMatch(payload) {
+  return api.post('/matches', payload).then((r) => r.data)
+}
+
+export function joinMatch(matchId) {
+  return api.post(`/matches/${matchId}/join`).then((r) => r.data)
+}
+
+export function leaveMatch(matchId) {
+  return api.delete(`/matches/${matchId}/leave`).then((r) => r.data)
+}
+
+export function approveParticipant(matchId, userId) {
+  return api.post(`/matches/${matchId}/participants/${userId}/approve`).then((r) => r.data)
+}
+
+export function rejectParticipant(matchId, userId) {
+  return api.post(`/matches/${matchId}/participants/${userId}/reject`).then((r) => r.data)
+}
+
+export function cancelMatch(matchId) {
+  return api.delete(`/matches/${matchId}`).then((r) => r.data)
+}
+
 // ── Admin: calendar + blocare manuala ────────────────────────────
 // from/to = string-uri ISO locale "YYYY-MM-DDTHH:MM:SS" (backend le citeste ca ora Bucuresti).
 export function getFieldCalendar(fieldId, from, to) {

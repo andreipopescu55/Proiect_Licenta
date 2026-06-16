@@ -34,3 +34,33 @@ export const BOOKING_STATUS = {
   completed: { label: 'Finalizată', cls: 'bg-blue-100 text-blue-700' },
   no_show: { label: 'Neprezentat', cls: 'bg-red-100 text-red-700' },
 }
+
+// ── Find Party (meciuri deschise) ────────────────────────────────
+export const SKILL_LABELS = {
+  any: 'Orice nivel',
+  beginner: 'Începător',
+  intermediate: 'Intermediar',
+  advanced: 'Avansat',
+}
+
+// Doar nivelurile reale (fara "any") — pentru selectarea la creare/filtrare.
+export const SKILL_OPTIONS = ['any', 'beginner', 'intermediate', 'advanced']
+
+export const MATCH_STATUS = {
+  open: { label: 'Caută jucători', cls: 'bg-accent-400/15 text-accent-400' },
+  full: { label: 'Complet', cls: 'bg-panel-2 text-slate-300' },
+  cancelled: { label: 'Anulat', cls: 'bg-red-500/10 text-red-400' },
+  completed: { label: 'Încheiat', cls: 'bg-blue-500/10 text-blue-300' },
+}
+
+export const PARTICIPANT_STATUS = {
+  requested: { label: 'Cerere trimisă', cls: 'bg-amber-400/15 text-amber-300' },
+  approved: { label: 'Acceptat', cls: 'bg-accent-400/15 text-accent-400' },
+  rejected: { label: 'Respins', cls: 'bg-red-500/10 text-red-400' },
+  left: { label: 'Ai ieșit', cls: 'bg-panel-2 text-slate-400' },
+}
+
+// sport_type (string enum) -> eticheta fotbal; fallback pe valoarea brută.
+export function sportLabel(sport) {
+  return SPORT_LABELS[sport] || sport || ''
+}

@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation } from 'react-router-dom'
-import { listMyBookings, cancelBooking, getField } from '../api/resources'
+import { useLocation, useNavigate, Link } from 'react-router-dom'
+import { listMyBookings, cancelBooking, getField, listMyMatches } from '../api/resources'
 import { BOOKING_STATUS, fieldFormat } from '../lib/labels'
 import { formatDateTimeRo } from '../lib/booking'
 import { Skeleton } from '../components/ui/Skeleton'
 import EmptyState from '../components/ui/EmptyState'
-import { PitchIcon } from '../components/ui/icons'
+import { PitchIcon, UsersIcon } from '../components/ui/icons'
+import CreateMatchModal from '../components/CreateMatchModal'
 
 function timeRo(iso) {
   return new Date(iso).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
@@ -18,8 +19,11 @@ function isCancellable(b) {
 
 export default function MyBookingsPage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [bookings, setBookings] = useState([])
   const [fields, setFields] = useState({})
+  const [matchByBooking, setMatchByBooking] = useState({}) // booking_id -> meci
+  const [modalBooking, setModalBooking] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -44,6 +48,16 @@ export default function MyBookingsPage() {
       })
       .catch(() => active && setError('Nu am putut încărca rezervările.'))
       .finally(() => active && setLoading(false))
+
+    // Meciurile mele -> map dupa booking_id, ca sa stim ce rezervare are deja meci.
+    listMyMatches()
+      .then((ms) => {
+        if (!active) return
+        const map = {}
+        ms.forEach((m) => { map[m.booking_id] = m })
+        setMatchByBooking(map)
+      })
+      .catch(() => {})
     return () => {
       active = false
     }
@@ -89,6 +103,8 @@ export default function MyBookingsPage() {
   function renderCard(b) {
     const st = BOOKING_STATUS[b.status] ?? { label: b.status, cls: 'bg-panel-2 text-slate-400' }
     const canCancel = isCancellable(b)
+    const existingMatch = matchByBooking[b.id]
+    const canOpenMatch = isCancellable(b) // viitoare + activa
     return (
       <li
         key={b.id}
@@ -111,16 +127,37 @@ export default function MyBookingsPage() {
           <span className="whitespace-nowrap text-lg font-extrabold text-accent-400">
             {Number(b.total_price).toFixed(2)} {b.currency}
           </span>
-          {canCancel && (
-            <button
-              type="button"
-              onClick={() => handleCancel(b)}
-              disabled={cancellingId === b.id}
-              className="rounded-lg border border-red-500/30 px-3 py-1.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
-            >
-              {cancellingId === b.id ? 'Se anulează…' : 'Anulează'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canOpenMatch &&
+              (existingMatch ? (
+                <Link
+                  to={`/meciuri/${existingMatch.id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-accent-400/40 px-3 py-1.5 text-sm font-semibold text-accent-400 transition hover:bg-accent-400/10"
+                >
+                  <UsersIcon className="h-4 w-4" />
+                  Vezi meciul ({existingMatch.spots_taken}/{existingMatch.total_spots})
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setModalBooking(b)}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-accent-400/15 px-3 py-1.5 text-sm font-semibold text-accent-400 transition hover:bg-accent-400/25"
+                >
+                  <UsersIcon className="h-4 w-4" />
+                  Deschide meci
+                </button>
+              ))}
+            {canCancel && (
+              <button
+                type="button"
+                onClick={() => handleCancel(b)}
+                disabled={cancellingId === b.id}
+                className="rounded-lg border border-red-500/30 px-3 py-1.5 text-sm font-semibold text-red-400 transition hover:bg-red-500/10 disabled:opacity-50"
+              >
+                {cancellingId === b.id ? 'Se anulează…' : 'Anulează'}
+              </button>
+            )}
+          </div>
         </div>
       </li>
     )
@@ -193,6 +230,19 @@ export default function MyBookingsPage() {
             </section>
           )}
         </>
+      )}
+
+      {modalBooking && (
+        <CreateMatchModal
+          booking={modalBooking}
+          fieldLabel={fieldLabel(modalBooking.field_id)}
+          onClose={() => setModalBooking(null)}
+          onCreated={(match) => {
+            setMatchByBooking((prev) => ({ ...prev, [match.booking_id]: match }))
+            setModalBooking(null)
+            navigate(`/meciuri/${match.id}`)
+          }}
+        />
       )}
     </div>
   )

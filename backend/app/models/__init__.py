@@ -7,6 +7,7 @@ from app.models.enums import (  # noqa: F401
     UserRole, VenueStatus, SportType, SurfaceType,
     BookingStatus, BookingSource, SubscriptionPlan,
     SubscriptionStatus, PaymentStatus, NotificationType,
+    MatchStatus, MatchSkillLevel, ParticipantStatus,
 )
 
 # Modele (in ordinea dependintelor FK)
@@ -18,3 +19,4 @@ from app.models.booking import Booking                    # noqa: F401
 from app.models.subscription import Subscription, Payment # noqa: F401
 from app.models.notification import Notification          # noqa: F401
 from app.models.audit_log import AuditLog                 # noqa: F401
+from app.models.match import Match, MatchParticipant      # noqa: F401

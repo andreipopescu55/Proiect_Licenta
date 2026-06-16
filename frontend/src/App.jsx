@@ -7,6 +7,8 @@ import HomePage from './pages/HomePage'
 import VenuePage from './pages/VenuePage'
 import BookingPage from './pages/BookingPage'
 import MyBookingsPage from './pages/MyBookingsPage'
+import MatchesPage from './pages/MatchesPage'
+import MatchDetailPage from './pages/MatchDetailPage'
 import AdminPage from './pages/AdminPage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
@@ -20,6 +22,10 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/venue/:slug" element={<VenuePage />} />
+
+            {/* Find Party — meciuri deschise (descoperire publica, actiuni cer auth) */}
+            <Route path="/meciuri" element={<MatchesPage />} />
+            <Route path="/meciuri/:id" element={<MatchDetailPage />} />
 
             {/* Pagina de rezervare e publica: poti vedea sloturile/pretul fara cont,
                 dar la "Rezervă" te trimite la login daca nu esti autentificat. */}
