@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
-import { getField, getFieldPricing, createBooking, payBookingDeposit } from '../api/resources'
+import { getField, getFieldPricing, getFieldAvailability, createBooking, payBookingDeposit } from '../api/resources'
 import { useAuth } from '../auth/AuthContext'
 import { SURFACE_LABELS, fieldFormat } from '../lib/labels'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -16,6 +16,9 @@ import {
   defaultBookingDate,
   formatDateRo,
   toDateStr,
+  addDays,
+  startOfWeek,
+  isSlotTaken,
 } from '../lib/booking'
 
 function StepHeader({ n, title, hint }) {
@@ -44,6 +47,7 @@ export default function BookingPage() {
   const [date, setDate] = useState('')
   const [startMin, setStartMin] = useState(null)
   const [duration, setDuration] = useState(null)
+  const [occupied, setOccupied] = useState([]) // intervale ocupate in ziua selectata
 
   const [takenStarts, setTakenStarts] = useState(new Set())
   const [submitting, setSubmitting] = useState(false)
@@ -70,6 +74,18 @@ export default function BookingPage() {
       active = false
     }
   }, [fieldId])
+
+  // Cand se schimba ziua, aducem intervalele ocupate ca sa marcam sloturile.
+  useEffect(() => {
+    if (!date) return
+    let active = true
+    getFieldAvailability(fieldId, date)
+      .then((res) => active && setOccupied(res.occupied || []))
+      .catch(() => active && setOccupied([]))
+    return () => {
+      active = false
+    }
+  }, [fieldId, date])
 
   const slotDuration = field?.slot_duration_minutes ?? 30
   const minBooking = field?.min_booking_minutes ?? 60
@@ -100,8 +116,10 @@ export default function BookingPage() {
     setFormError(null)
   }
 
-  function onChangeDate(e) {
-    setDate(e.target.value)
+  function selectDate(ds) {
+    if (ds === date) return
+    setDate(ds)
+    setTakenStarts(new Set())
     resetSelection()
   }
 
@@ -213,37 +231,32 @@ export default function BookingPage() {
             </div>
           </section>
 
-          {/* Data */}
+          {/* Data — banda saptamanala */}
           <section className={cardCls}>
             <StepHeader n={1} title="Alege data" />
-            <div className="flex flex-wrap items-center gap-3">
-              <input
-                type="date"
-                value={date}
-                min={todayStr}
-                onChange={onChangeDate}
-                className="rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-slate-200 outline-none transition [color-scheme:dark] focus:border-accent-400"
-              />
-              {date && (
-                <span className="rounded-lg bg-accent-400/10 px-3 py-1.5 text-sm font-semibold capitalize text-accent-400">
-                  {formatDateRo(date)}
-                </span>
-              )}
-            </div>
+            <WeekStrip
+              value={date}
+              onChange={selectDate}
+              todayStr={todayStr}
+              dayHasSlots={(ds) => buildDaySlots(rules, dowFromDate(ds), slotDuration).length > 0}
+            />
+            {date && (
+              <p className="mt-3 text-sm font-semibold capitalize text-accent-400">{formatDateRo(date)}</p>
+            )}
           </section>
 
-          {/* Sloturi */}
+          {/* Sloturi — un singur rand de chips */}
           <section className={cardCls}>
-            <StepHeader n={2} title="Ora de început" hint={slots.length > 0 ? `${slots.length} sloturi` : undefined} />
+            <StepHeader n={2} title="Ora de început" hint={slots.length > 0 ? `${slots.length} ore` : undefined} />
             {slots.length === 0 ? (
               <p className="text-sm text-slate-400">
-                Nu există tarife (deci nici sloturi) pentru această zi. Alege altă dată.
+                Nu există tarife (deci nici ore) pentru această zi. Alege altă dată.
               </p>
             ) : (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+              <div className="flex flex-wrap gap-2">
                 {slots.map((m) => {
-                  const isTaken = takenStarts.has(m)
                   const isPast = date === todayStr && m <= nowMin
+                  const isTaken = takenStarts.has(m) || isSlotTaken(occupied, m, slotDuration)
                   const disabled = isTaken || isPast
                   const selected = m === startMin
                   return (
@@ -251,18 +264,21 @@ export default function BookingPage() {
                       key={m}
                       type="button"
                       disabled={disabled}
+                      title={isTaken ? 'ocupat' : undefined}
                       onClick={() => {
                         setStartMin(m)
                         setDuration((d) => d ?? minBooking)
                         setFormError(null)
                       }}
                       className={[
-                        'rounded-lg px-2 py-2 text-sm font-semibold transition',
+                        'min-w-[64px] rounded-lg px-3 py-2 text-center text-sm font-semibold transition',
                         selected
                           ? 'scale-105 bg-accent-400 text-ink shadow-md shadow-accent-400/20'
-                          : disabled
-                            ? 'cursor-not-allowed bg-panel-2/50 text-slate-600 line-through'
-                            : 'bg-panel-2 text-slate-200 hover:bg-accent-400/10 hover:text-accent-400',
+                          : isTaken
+                            ? 'cursor-not-allowed bg-panel-2/40 text-slate-600 line-through'
+                            : isPast
+                              ? 'cursor-not-allowed bg-panel-2/40 text-slate-600'
+                              : 'bg-panel-2 text-slate-200 hover:bg-accent-400/10 hover:text-accent-400',
                       ].join(' ')}
                     >
                       {minutesToTime(m)}
@@ -381,6 +397,93 @@ export default function BookingPage() {
           onLater={() => navigate('/rezervarile-mele', { state: { justBooked: true } })}
         />
       )}
+    </div>
+  )
+}
+
+// Banda saptamanala pentru alegerea zilei: sageti intre saptamani, "azi" evidentiat,
+// zile trecute dezactivate, punct verde la zilele cu ore disponibile.
+const WD_LABELS = ['Lu', 'Ma', 'Mi', 'Jo', 'Vi', 'Sâ', 'Du']
+
+function WeekStrip({ value, onChange, todayStr, dayHasSlots }) {
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(value || todayStr))
+  useEffect(() => {
+    if (value) setWeekStart(startOfWeek(value))
+  }, [value])
+
+  const dayNum = (ds) => new Date(`${ds}T00:00:00`).getDate()
+  const monShort = (ds) =>
+    new Date(`${ds}T00:00:00`).toLocaleDateString('ro-RO', { month: 'short' }).replace('.', '')
+
+  const weekEnd = addDays(weekStart, 6)
+  const label =
+    monShort(weekStart) === monShort(weekEnd)
+      ? `${dayNum(weekStart)} – ${dayNum(weekEnd)} ${monShort(weekEnd)}`
+      : `${dayNum(weekStart)} ${monShort(weekStart)} – ${dayNum(weekEnd)} ${monShort(weekEnd)}`
+  const canPrev = weekStart > startOfWeek(todayStr)
+
+  return (
+    <div>
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          type="button"
+          aria-label="Săptămâna anterioară"
+          disabled={!canPrev}
+          onClick={() => setWeekStart(addDays(weekStart, -7))}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-slate-300 transition hover:border-line-2 hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+        </button>
+        <span className="text-sm font-semibold text-white">{label}</span>
+        <button
+          type="button"
+          aria-label="Săptămâna următoare"
+          onClick={() => setWeekStart(addDays(weekStart, 7))}
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-line text-slate-300 transition hover:border-line-2 hover:text-white"
+        >
+          <ArrowRightIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid grid-cols-7 gap-1.5">
+        {Array.from({ length: 7 }).map((_, i) => {
+          const ds = addDays(weekStart, i)
+          const isPast = ds < todayStr
+          const isToday = ds === todayStr
+          const selected = ds === value
+          const hasSlots = dayHasSlots(ds)
+          const disabled = isPast || !hasSlots
+          return (
+            <button
+              key={ds}
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange(ds)}
+              className={[
+                'flex flex-col items-center gap-1 rounded-lg py-2 transition',
+                selected
+                  ? 'bg-accent-400 text-ink'
+                  : isToday
+                    ? 'border-2 border-accent-400 text-white'
+                    : 'border border-line text-slate-200',
+                disabled
+                  ? 'cursor-not-allowed opacity-40'
+                  : !selected && 'hover:border-line-2 hover:text-white',
+              ].filter(Boolean).join(' ')}
+            >
+              <span className={`text-[11px] ${selected ? 'text-ink' : 'text-slate-400'}`}>
+                {WD_LABELS[i]}
+              </span>
+              <span className="text-base font-bold">{dayNum(ds)}</span>
+              <span className="flex h-1.5 items-center">
+                {hasSlots && !isPast && !selected && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                )}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

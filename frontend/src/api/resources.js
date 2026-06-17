@@ -25,6 +25,11 @@ export function getFieldPricing(fieldId) {
   return api.get(`/fields/${fieldId}/pricing`).then((r) => r.data)
 }
 
+// Intervalele ocupate (rezervari/blocari) pentru un teren intr-o zi -> marcam sloturile.
+export function getFieldAvailability(fieldId, date) {
+  return api.get(`/fields/${fieldId}/availability`, { params: { date } }).then((r) => r.data)
+}
+
 // ── Rating baze ──────────────────────────────────────────────────
 // Sumar public (media + numar); my_score vine completat daca esti logat.
 export function getVenueRating(venueId) {

@@ -8,6 +8,24 @@ export function toDateStr(d) {
   return `${y}-${m}-${day}`
 }
 
+// "YYYY-MM-DD" + n zile -> "YYYY-MM-DD".
+export function addDays(dateStr, n) {
+  const d = new Date(`${dateStr}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  return toDateStr(d)
+}
+
+// Lunea saptamanii care contine dateStr (banda incepe de luni).
+export function startOfWeek(dateStr) {
+  return addDays(dateStr, -dowFromDate(dateStr))
+}
+
+// True daca slotul [startMin, startMin+slotDuration) se suprapune cu un interval ocupat.
+export function isSlotTaken(occupied, startMin, slotDuration) {
+  const end = startMin + slotDuration
+  return occupied.some((o) => startMin < o.end_min && end > o.start_min)
+}
+
 // Backend foloseste day_of_week 0=luni..6=duminica. JS getDay() are 0=duminica.
 // Convertim: (getDay()+6) % 7.
 export function dowFromDate(dateStr) {

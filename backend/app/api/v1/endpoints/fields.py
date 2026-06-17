@@ -7,14 +7,16 @@ Ownership transitiv: ca sa modifici un Field, trebuie sa fii owner
 pe Venue-ul parinte. Acelasi pentru PricingRule -> Field -> Venue.
 """
 import uuid
+from datetime import datetime, time, timedelta, date as date_cls
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_current_user, require_role
-from app.crud import venue_crud, field_crud
+from app.crud import venue_crud, field_crud, booking_crud
+from app.crud.booking import LOCAL_TZ
 from app.models.user import User
-from app.models.enums import UserRole, VenueStatus
+from app.models.enums import UserRole, VenueStatus, BookingStatus
 from app.models.field import Field, PricingRule
 from app.schemas.field import (
     FieldCreate, FieldUpdate, FieldOut,
@@ -127,6 +129,38 @@ def create_venue_field(
 )
 def get_field(field_id: uuid.UUID, db: Session = Depends(get_db)):
     return _ensure_public_field(field_id, db)
+
+
+@fields_router.get(
+    "/{field_id}/availability",
+    summary="Intervale ocupate ale unui teren intr-o zi (public)",
+)
+def field_availability(
+    field_id: uuid.UUID,
+    for_date: date_cls = Query(..., alias="date", description="Ziua locala YYYY-MM-DD"),
+    db: Session = Depends(get_db),
+):
+    """
+    Intoarce intervalele OCUPATE (rezervari + blocari, neanulate) pentru ziua data,
+    in minute de la miezul noptii local. Frontend-ul marcheaza sloturile ocupate
+    inca de la inceput (fara sa fie nevoie de o incercare esuata).
+    """
+    _ensure_public_field(field_id, db)
+    day_start = datetime.combine(for_date, time(0, 0), tzinfo=LOCAL_TZ)
+    day_end = day_start + timedelta(days=1)
+    bookings = booking_crud.list_bookings_for_field(db, field_id, day_start, day_end)
+
+    occupied = []
+    for b in bookings:
+        if b.status == BookingStatus.CANCELLED:
+            continue
+        s = max(b.start_time.astimezone(LOCAL_TZ), day_start)
+        e = min(b.end_time.astimezone(LOCAL_TZ), day_end)
+        start_min = int((s - day_start).total_seconds() // 60)
+        end_min = int((e - day_start).total_seconds() // 60)
+        if end_min > start_min:
+            occupied.append({"start_min": start_min, "end_min": end_min})
+    return {"date": str(for_date), "occupied": occupied}
 
 
 @fields_router.patch(
