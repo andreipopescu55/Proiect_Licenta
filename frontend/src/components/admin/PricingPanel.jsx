@@ -3,6 +3,8 @@ import { listFieldPricingManage, addPricingRule, deletePricingRule } from '../..
 
 const DAY_LABELS = ['Luni', 'Marți', 'Miercuri', 'Joi', 'Vineri', 'Sâmbătă', 'Duminică']
 const hhmm = (t) => (t ? t.slice(0, 5) : '')
+// end_time "00:00" inseamna miezul noptii (24:00) -> afisam "24:00", nu "00:00".
+const endLabel = (t) => (hhmm(t) === '00:00' ? '24:00' : hhmm(t))
 const inputCls =
   'rounded-lg border border-line bg-panel-2 px-3 py-2 text-sm text-slate-200 outline-none focus:border-accent-400 [color-scheme:dark]'
 const labelCls = 'mb-1 block text-xs font-semibold text-slate-300'
@@ -37,7 +39,8 @@ export default function PricingPanel({ fieldId }) {
   async function handleAdd(e) {
     e.preventDefault()
     setFormError(null)
-    if (form.start_time >= form.end_time) {
+    // end_time "00:00" = miezul noptii (24:00) -> valid ca sfarsit de program.
+    if (form.end_time !== '00:00' && form.start_time >= form.end_time) {
       setFormError('Ora de început trebuie să fie înainte de cea de sfârșit.')
       return
     }
@@ -115,7 +118,7 @@ export default function PricingPanel({ fieldId }) {
                     className="inline-flex items-center gap-2 rounded-lg bg-panel-2 px-2.5 py-1 text-sm"
                   >
                     <span className="font-medium text-slate-300">
-                      {hhmm(r.start_time)}–{hhmm(r.end_time)}
+                      {hhmm(r.start_time)}–{endLabel(r.end_time)}
                     </span>
                     <span className="font-bold text-accent-400">{Number(r.price_per_hour)} {r.currency}/h</span>
                     <button
