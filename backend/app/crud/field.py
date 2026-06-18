@@ -88,6 +88,17 @@ def list_pricing_rules(db: Session, field_id: uuid.UUID) -> Sequence[PricingRule
     return db.execute(stmt).scalars().all()
 
 
+def _start_min(t) -> int:
+    """Ora de inceput in minute de la miezul noptii (00:00 = 0)."""
+    return t.hour * 60 + t.minute
+
+
+def _end_min(t) -> int:
+    """Ora de sfarsit in minute; 00:00 inseamna miezul noptii (24:00 = 1440)."""
+    m = t.hour * 60 + t.minute
+    return 1440 if m == 0 else m
+
+
 def find_overlapping_rule(
     db: Session,
     field_id: uuid.UUID,
@@ -96,26 +107,27 @@ def find_overlapping_rule(
     end_time,
 ) -> Optional[PricingRule]:
     """
-    Verifica daca exista o regula existenta pe acelasi (field, day) care
-    se suprapune cu intervalul [start_time, end_time].
+    Verifica daca exista o regula pe acelasi (field, day) care se suprapune cu
+    [start_time, end_time]. Comparam in MINUTE, tratand end_time 00:00 ca 24:00
+    (altfel o regula care se termina la miezul noptii pare "goala" si suprapunerea
+    nu e detectata -> se puteau adauga duplicate gen 23:00-24:00).
 
-    Conditia de overlap intre 2 intervale [a, b] si [c, d]:
-        a < d AND c < b
-    (=) regula existenta incepe inainte sa terminam noi AND noi incepem
-        inainte sa termine regula existenta.
+    Overlap intre [a,b] si [c,d]:  a < d AND c < b.
     """
-    stmt = (
-        select(PricingRule)
-        .where(
+    ns, ne = _start_min(start_time), _end_min(end_time)
+    rules = db.execute(
+        select(PricingRule).where(
             and_(
                 PricingRule.field_id == field_id,
                 PricingRule.day_of_week == day_of_week,
-                PricingRule.start_time < end_time,
-                PricingRule.end_time > start_time,
             )
         )
-    )
-    return db.execute(stmt).scalars().first()
+    ).scalars().all()
+    for r in rules:
+        rs, re = _start_min(r.start_time), _end_min(r.end_time)
+        if ns < re and rs < ne:
+            return r
+    return None
 
 
 def create_pricing_rule(
